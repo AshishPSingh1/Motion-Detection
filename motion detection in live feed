@@ -1,0 +1,76 @@
+import cv2
+
+# Load pre-trained human body cascade classifier
+body_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
+
+# Function to detect human motion and actions
+def detect_motion(frame, prev_frame):
+
+    # Convert frames to grayscale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+    
+    # Find the absolute difference between current frame and previous frame
+    frame_diff = cv2.absdiff(gray, prev_gray)
+    
+    # Apply thresholding to get binary image
+    _, thresh = cv2.threshold(frame_diff, 30, 255, cv2.THRESH_BINARY)
+    
+    # Find contours in the thresholded image
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Loop through the contours to find motion
+    for contour in contours:
+        if cv2.contourArea(contour) > 1000:  # adjust this threshold as needed
+
+            # Draw bounding box around the detected motion
+            x, y, w, h = cv2.boundingRect(contour)
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            
+            # Identify body parts (not implemented in this basic version)
+            # You'll need more sophisticated methods for accurate body part detection
+            
+            # Identify actions (not implemented in this basic version)
+            # You'll need machine learning models or other techniques for action recognition
+    
+    return frame
+
+# Capture video from webcam
+cap = cv2.VideoCapture(0)
+
+# Get screen resolution
+screen_width = 1920  # Change to your screen's width
+screen_height = 1080  # Change to your screen's height
+
+# Set full-screen display
+cv2.namedWindow('Motion Detection', cv2.WINDOW_NORMAL)
+cv2.setWindowProperty('Motion Detection', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+cv2.resizeWindow('Motion Detection', screen_width, screen_height)
+
+# Read first frame
+ret, prev_frame = cap.read()
+
+while True:
+
+    # Read frame from webcam
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    # Detect human motion and actions
+    motion_detected_frame = detect_motion(frame, prev_frame)
+    
+    # Display the frame with motion detection
+    cv2.imshow('Motion Detection', motion_detected_frame)
+    
+    # Update previous frame
+    prev_frame = frame.copy()
+    
+    # Check for key press
+    key = cv2.waitKey(1)
+    if key == 27:  # Press 'Esc' to exit
+        break
+
+# Release the video capture object and close all windows
+cap.release()
+cv2.destroyAllWindows()
